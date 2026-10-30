@@ -10,3 +10,4 @@ tensorflow
 opencv-python
 deepface
 tf-keras
+werkzeug
