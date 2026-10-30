@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Detection Result</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #141e30, #243b55);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .result-card {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            padding: 40px 30px;
+            border-radius: 18px;
+            text-align: center;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.25);
+        }
+
+        h1 {
+            color: #243b55;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .emotion {
+            font-size: 32px;
+            font-weight: bold;
+            color: #16865c;
+            margin: 20px 0;
+            text-transform: capitalize;
+        }
+
+        .confidence {
+            font-size: 19px;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        .method {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .button {
+            display: inline-block;
+            text-decoration: none;
+            background: #243b55;
+            color: white;
+            padding: 12px 22px;
+            border-radius: 8px;
+            margin: 6px;
+        }
+
+        .button:hover {
+            background: #16865c;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="result-card">
+
+        <h1>Emotion Detection Result</h1>
+
+        <p class="subtitle">
+            Your emotion prediction is ready!
+        </p>
+
+        <div class="emotion">
+            {{ emotion }}
+        </div>
+
+        <div class="confidence">
+            Confidence: {{ confidence }}%
+        </div>
+
+        <p class="method">
+            Detection Method:
+            {{ method | default("Emotion Detection") }}
+        </p>
+
+        <a href="/" class="button">
+            Audio Detection
+        </a>
+
+        <a href="/camera" class="button">
+            Camera Detection
+        </a>
+
+    </div>
+
+</body>
+</html>

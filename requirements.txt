@@ -9,4 +9,4 @@ soundfile
 tensorflow
 opencv-python
 deepface
-tf-kerass
+tf-keras
