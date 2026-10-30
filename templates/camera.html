@@ -1,0 +1,216 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facial Emotion Recognition</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f6fb;
+            color: #202938;
+            text-align: center;
+            margin: 0;
+            padding: 30px 15px;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: auto;
+            padding: 25px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px #00000012;
+        }
+
+        video {
+            width: 100%;
+            max-width: 480px;
+            background: #111;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #startBtn {
+            background: #1769e0;
+            color: white;
+        }
+
+        #stopBtn {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        #emotion {
+            font-size: 25px;
+            font-weight: bold;
+            color: #1769e0;
+        }
+
+        #status {
+            color: #555;
+        }
+
+        a {
+            color: #1769e0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Facial Emotion Recognition</h1>
+        <p>Start your webcam to estimate facial expressions.</p>
+
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="canvas" hidden></canvas>
+
+        <div>
+            <button id="startBtn">Start Camera</button>
+            <button id="stopBtn" disabled>Stop Camera</button>
+        </div>
+
+        <p id="status">Camera is stopped.</p>
+        <p>Detected expression:</p>
+        <div id="emotion">Waiting...</div>
+        <p id="confidence"></p>
+
+        <p><a href="/">Back to Audio Emotion Recognition</a></p>
+    </div>
+
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const startBtn = document.getElementById("startBtn");
+        const stopBtn = document.getElementById("stopBtn");
+        const statusText = document.getElementById("status");
+        const emotionText = document.getElementById("emotion");
+        const confidenceText = document.getElementById("confidence");
+
+        let cameraStream = null;
+        let running = false;
+        let busy = false;
+        let timerId = null;
+
+        async function detectEmotion() {
+            if (!running || busy || video.readyState < 2) {
+                return;
+            }
+
+            busy = true;
+
+            try {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                const context = canvas.getContext("2d");
+                context.drawImage(video, 0, 0);
+
+                const blob = await new Promise(resolve => {
+                    canvas.toBlob(resolve, "image/jpeg", 0.85);
+                });
+
+                if (!blob) {
+                    throw new Error("Could not capture a camera image.");
+                }
+
+                const formData = new FormData();
+                formData.append("file", blob, "camera.jpg");
+
+                const response = await fetch("/facial-emotion", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Emotion detection failed.");
+                }
+
+                emotionText.textContent = data.emotion;
+                confidenceText.textContent =
+                    "Model score: " + data.confidence + "%";
+                statusText.textContent = "Camera is running.";
+
+            } catch (error) {
+                statusText.textContent = error.message;
+                confidenceText.textContent = "";
+            } finally {
+                busy = false;
+            }
+        }
+
+        startBtn.addEventListener("click", async () => {
+            try {
+                statusText.textContent = "Requesting camera permission...";
+
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: false
+                });
+
+                video.srcObject = cameraStream;
+                await video.play();
+
+                running = true;
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                emotionText.textContent = "Detecting...";
+
+                statusText.textContent = "Camera started.";
+
+                // Wait for the video dimensions before sending images.
+                video.addEventListener("loadeddata", detectEmotion, {
+                    once: true
+                });
+
+                timerId = setInterval(detectEmotion, 2000);
+
+            } catch (error) {
+                statusText.textContent =
+                    "Cannot open camera. Allow camera permission in your browser. "
+                    + error.message;
+            }
+        });
+
+        stopBtn.addEventListener("click", () => {
+            running = false;
+
+            if (timerId !== null) {
+                clearInterval(timerId);
+                timerId = null;
+            }
+
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+
+            video.srcObject = null;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            statusText.textContent = "Camera is stopped.";
+            emotionText.textContent = "Stopped";
+            confidenceText.textContent = "";
+        });
+
+        window.addEventListener("beforeunload", () => {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-multipart
+jinja2
+joblib
+librosa
+numpy
+soundfile
+tensorflow
+opencv-python
+deepface
+tf-kerass
